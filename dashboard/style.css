@@ -41,6 +41,20 @@ html, body { background: var(--bg); color: var(--text); font-family: var(--sans)
 .pill.ok { color: var(--green); border-color: #28a745; }
 .pill.err { color: var(--red); border-color: #dc3545; }
 
+/* ── SCOPE TOGGLE (LIVE / BACKTEST) ── */
+#scopeToggle {
+  background: var(--panel2);
+  border: 1px solid var(--border2);
+  color: var(--cyan);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+#scopeToggle[data-scope="live"] { background: var(--cyan); color: #fff; }
+#scopeToggle[data-scope="backtest"] { background: var(--amber); color: #fff; }
+
+.pnl-sub .backtest-label { color: var(--amber); font-weight: 600; }
+
 /* ── pnl hero ── */
 .pnl-hero {
   display: flex;

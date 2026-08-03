@@ -20,9 +20,9 @@ ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)
 DASH_DIR = os.path.join(ROOT, "dashboard")
 
 
-def _snapshot(server) -> dict:
+def _snapshot(server, scope: str = "backtest") -> dict:
     from server import _build_snapshot
-    return _build_snapshot(server)
+    return _build_snapshot(server, scope=scope)
 
 
 STATIC_TYPES = {
@@ -48,9 +48,15 @@ def _http_server(server, port: int):
             self.wfile.write(body)
 
         def do_GET(self):
-            path = self.path.split("?")[0]
+            """Servir dashboard o snapshot. Soporta ?scope=live|backtest."""
+            from urllib.parse import urlparse, parse_qs
+            parsed = urlparse(self.path)
+            path = parsed.path
+            qs = parse_qs(parsed.query)
+            scope = qs.get("scope", ["backtest"])[0]  # default = backtest data
             if path == "/api/snapshot":
-                self._send(200, json.dumps(_snapshot(server)).encode(), "application/json")
+                snap = _snapshot(server, scope=scope)
+                self._send(200, json.dumps(snap).encode(), "application/json")
                 return
             ctype = STATIC_TYPES.get(path, mimetypes.guess_type(path)[0] or "application/octet-stream")
             fname = "index.html" if path == "/" else path.lstrip("/")

@@ -495,9 +495,10 @@ def _fetch_market_rankings() -> dict:
     }
 
 
-def _build_snapshot(server: TradingMCPServer) -> dict:
-    """Snapshot completo para el dashboard: usa trades sintéticos del broker paper
-    + métricas de backtests multi-activo para poblar lattice/ridge/graph."""
+def _build_snapshot(server: TradingMCPServer, scope: str = "backtest") -> dict:
+    """Snapshot para el dashboard.
+    - scope='backtest' (default): usa trades sintéticos del paper broker + backtest histórico.
+    - scope='live': usa trades reales ejecutados en el paper broker (creados via place_order)."""
     import random as _random
     def rng_uniform(sym, lo, hi):
         _random.seed(hash(sym) % (2**32))
@@ -532,7 +533,15 @@ def _build_snapshot(server: TradingMCPServer) -> dict:
                 "synthetic": True,
             }
 
-    trades = server.synth.trades(n=6000)
+    # Scope: 'live' usa trades reales del paper broker; 'backtest' usa synth.6000
+    if scope == "live":
+        trades = [
+            {"ts": t["ts"], "symbol": t["symbol"], "side": t["side"], "pnl": float(t["pnl"]),
+             "equity": t.get("equity", 0.0), "win": t.get("pnl", 0) > 0, "asset_class": t.get("asset_class", "CRYPTO")}
+            for t in server.broker.closed_trades
+        ] or server.synth.trades(n=100)
+    else:
+        trades = server.synth.trades(n=6000)
     equity_series = [t["equity"] for t in trades]
     total_pnl = equity_series[-1] if equity_series else 0
     wins = [t for t in trades if t["win"]]

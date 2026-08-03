@@ -223,6 +223,23 @@ function drawMC(data) {
   }
 }
 
+/* ── Scope toggle (LIVE / BACKTEST) ── */
+let CURRENT_SCOPE = "live";  // "live" o "backtest"
+const urlParams = new URLSearchParams(window.location.search);
+const scopeParam = urlParams.get("scope");
+if (scopeParam === "backtest") CURRENT_SCOPE = "backtest";
+const _scopePill = $("scopeToggle");
+if (_scopePill) {
+  _scopePill.setAttribute("data-scope", CURRENT_SCOPE);
+  _scopePill.textContent = CURRENT_SCOPE === "live" ? "LIVE" : "BACKTEST";
+  _scopePill.addEventListener("click", () => {
+    CURRENT_SCOPE = CURRENT_SCOPE === "live" ? "backtest" : "live";
+    _scopePill.setAttribute("data-scope", CURRENT_SCOPE);
+    _scopePill.textContent = CURRENT_SCOPE === "live" ? "LIVE" : "BACKTEST";
+    loadInitial();
+  });
+}
+
 /* ─────────────────────────── Render Snapshot & Tables ─────────────────────────── */
 function render() {
   if (!SNAP) return;
@@ -232,7 +249,7 @@ function render() {
   const h = d.header || {};
   $("pnlTotal").textContent = fmtMoney(h.total_pnl);
   $("pnlTotal").style.color = h.total_pnl >= 0 ? "var(--green)" : "var(--red)";
-  $("pnlSub").innerHTML = (h.total_pnl >= 0 ? "▲" : "▼") + " ALL-TIME · LEVERAGE " + (h.leverage || 1) + "x";
+  $("pnlSub").innerHTML = (h.total_pnl >= 0 ? "▲" : "▼") + " ALL-TIME" + (CURRENT_SCOPE === "backtest" ? ' · <span class="backtest-label">BACKTEST SIM</span>' : " · LEVERAGE " + (h.leverage || 1) + "x");
   $("statTrades").textContent = fmtNum(h.trades);
   $("statWin").textContent = (h.win_rate || 0).toFixed(1) + "%";
   $("statAvg").textContent = fmtMoney(h.avg_trade);
@@ -404,7 +421,7 @@ window.closePos = async function(symbol) {
 /* ─────────────────────────── WebSocket / Fetch connection ─────────────────────────── */
 async function loadInitial() {
   try {
-    const r = await fetch("/api/snapshot", { cache: "no-store" });
+    const r = await fetch(`/api/snapshot?scope=${CURRENT_SCOPE}`, { cache: "no-store" });
     SNAP = await r.json();
     render();
     setConn("ok");
@@ -453,7 +470,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 setInterval(async () => {
   try {
-    const r = await fetch("/api/snapshot", { cache: "no-store" });
+    const r = await fetch(`/api/snapshot?scope=${CURRENT_SCOPE}`, { cache: "no-store" });
     SNAP = await r.json();
     render();
   } catch (e) { /* ignore */ }
