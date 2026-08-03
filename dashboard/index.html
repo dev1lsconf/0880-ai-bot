@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>0880 AI BOT — Multi-Market Trading Dashboard</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div class="app">
+  <!-- ══════════ HEADER ══════════ -->
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">◈</span>
+      <span class="brand-name">0880&nbsp;AI&nbsp;BOT&nbsp;<span class="dim">— MULTI-ASSET</span></span>
+    </div>
+    <nav class="tabs" id="tabsNav">
+      <button class="tab active" data-target="viewLive">LIVE</button>
+      <button class="tab" data-target="viewMarket">MARKET</button>
+      <button class="tab" data-target="viewPositions">POSITIONS <span class="badge" id="openPositions">0</span></button>
+      <button class="tab" data-target="viewDate">22/0</button>
+    </nav>
+    <div class="top-right">
+      <span class="pill" id="connPill">◉ CONECTANDO</span>
+      <span class="pill green" id="brokerPill">PAPER</span>
+    </div>
+  </header>
+
+  <!-- ══════════ PNL HERO ══════════ -->
+  <section class="pnl-hero">
+    <div class="pnl-main">
+      <div class="pnl-label">TOTAL PNL</div>
+      <div class="pnl-value" id="pnlTotal">$0</div>
+      <div class="pnl-sub" id="pnlSub">▲ 0.00% all time</div>
+    </div>
+    <div class="pnl-stats">
+      <div class="stat"><span class="k">FILLED</span><span class="v" id="statTrades">0</span><span class="u">TRADES</span></div>
+      <div class="stat"><span class="k">WIN RATE</span><span class="v" id="statWin">0%</span></div>
+      <div class="stat"><span class="k">AVERAGE</span><span class="v" id="statAvg">$0</span><span class="u">/TRADE</span></div>
+      <div class="stat"><span class="k">PROFIT FACTOR</span><span class="v" id="statPF">0</span></div>
+      <div class="stat"><span class="k">SHARPE</span><span class="v" id="statSharpe">0</span></div>
+      <div class="stat"><span class="k">MAX DD</span><span class="v red" id="statDD">0%</span></div>
+    </div>
+    <div class="pnl-boxes" id="pnlBoxes"></div>
+  </section>
+
+  <!-- ══════════ VIEW: LIVE (CHARTS) ══════════ -->
+  <div id="viewLive" class="view-panel">
+    <main class="grid">
+      <!-- ── Probability Lattice ── -->
+      <section class="card lattice">
+        <div class="card-head">
+          <h2>PROBABILITY LATTICE — MULTI-ASSET, ONE BOARD</h2>
+          <div class="card-side" id="latticeSide"></div>
+        </div>
+        <canvas id="cvLattice" width="560" height="300"></canvas>
+        <div class="card-foot" id="latticeFoot"></div>
+      </section>
+
+      <!-- ── Tail Probability Ridge ── -->
+      <section class="card ridge">
+        <div class="card-head">
+          <h2>EQUITY CURVE — BACKTEST + MONTE CARLO</h2>
+          <div class="card-side" id="ridgeSide"></div>
+        </div>
+        <canvas id="cvRidge" width="560" height="300"></canvas>
+        <div class="card-foot" id="ridgeFoot"></div>
+      </section>
+
+      <!-- ── Relationship Graph ── -->
+      <section class="card graph">
+        <div class="card-head">
+          <h2>ASSET CORRELATION HEATMAP</h2>
+          <div class="card-side" id="graphSide"></div>
+        </div>
+        <canvas id="cvGraph" width="560" height="300"></canvas>
+        <div class="card-foot legend" id="graphLegend"></div>
+      </section>
+
+      <!-- ── Monte Carlo / Equity ── -->
+      <section class="card mc">
+        <div class="card-head">
+          <h2>RETURN DISTRIBUTION — 2,000 SIMULATIONS</h2>
+          <div class="card-side" id="mcSide"></div>
+        </div>
+        <canvas id="cvMC" width="560" height="300"></canvas>
+        <div class="card-foot" id="mcFoot"></div>
+      </section>
+    </main>
+
+    <!-- ══════════ BOTTOM STRIP ══════════ -->
+    <section class="assets">
+      <div class="asset-card" id="assetSTOCK"><h3>STOCKS</h3><div class="rows"></div></div>
+      <div class="asset-card" id="assetCRYPTO"><h3>CRYPTO</h3><div class="rows"></div></div>
+      <div class="asset-card" id="assetCONTRACT"><h3>CONTRACTS</h3><div class="rows"></div></div>
+    </section>
+  </div>
+
+  <!-- ══════════ VIEW: MARKET (TOP/BOTTOM 10 POR CLASE ACTIVA) ══════════ -->
+  <div id="viewMarket" class="view-panel hidden">
+    <!-- TOP STOCKS -->
+    <section class="card market-view">
+      <div class="card-head">
+        <h2>TOP MOVERS — ACCIONES (HOY)</h2>
+        <div class="card-side">Fuente: Yahoo Finance · <b class="up">actualización en vivo</b></div>
+      </div>
+      <div class="table-container">
+        <table class="market-table">
+          <thead>
+            <tr><th>#</th><th>ACTIVO</th><th>SÍMBOLO</th><th>PRECIO</th><th>% CAMBIO (24H)</th><th>VOL</th><th>ACCIONES</th></tr>
+          </thead>
+          <tbody id="topStocksTbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- BOTTOM STOCKS -->
+    <section class="card market-view">
+      <div class="card-head">
+        <h2>DOLDRUMS — ACCIONES (HOY)</h2>
+        <div class="card-side">Fuente: Yahoo Finance · <b class="red">mayor caída</b></div>
+      </div>
+      <div class="table-container">
+        <table class="market-table">
+          <thead>
+            <tr><th>#</th><th>ACTIVO</th><th>SÍMBOLO</th><th>PRECIO</th><th>% CAMBIO (24H)</th><th>VOL</th><th>ACCIONES</th></tr>
+          </thead>
+          <tbody id="bottomStocksTbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- TOP CRYPTO -->
+    <section class="card market-view">
+      <div class="card-head">
+        <h2>TOP MOVERS — CRIPTOMONEDAS (24H)</h2>
+        <div class="card-side">Fuente: Binance · <b class="up">mayor ganancia</b></div>
+      </div>
+      <div class="table-container">
+        <table class="market-table">
+          <thead>
+            <tr><th>#</th><th>ACTIVO</th><th>SÍMBOLO</th><th>PRECIO</th><th>% CAMBIO (24H)</th><th>VOL (24H)</th><th>ACCIONES</th></tr>
+          </thead>
+          <tbody id="topCryptoTbody"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <!-- ══════════ VIEW: POSITIONS ══════════ -->
+  <div id="viewPositions" class="view-panel hidden">
+    <section class="card positions-view">
+      <div class="card-head">
+        <h2>ACTIVE POSITIONS — LIVE ON ACCOUNT (PAPER BROKER)</h2>
+        <div class="card-side">Saldo disponible: <b id="posCash">$0</b> · Valor cartera: <b id="posVal">$0</b></div>
+      </div>
+      <div class="table-container">
+        <table class="market-table">
+          <thead>
+            <tr><th>ACTIVO</th><th>CANTIDAD</th><th>PRECIO ENTRADA</th><th>PRECIO ACTUAL</th><th>PNL NO REALIZADO</th><th>PALANCAMIENTO</th><th>ACCIONES</th></tr>
+          </thead>
+          <tbody id="positionsTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <!-- ══════════ VIEW: DATE ══════════ -->
+  <div id="viewDate" class="view-panel hidden">
+    <section class="card">
+      <div class="card-head"><h2>CALENDARIO DE SEÑALES</h2></div>
+      <p class="dim" style="padding: 20px 0; font-family: monospace;">Historial diario de operaciones. Sin eventos hoy.</p>
+    </section>
+  </div>
+
+  <footer class="foot">MCP Server <span id="mcpVer">v?</span> · broker <span id="mcpBroker">?</span> · live via WebSocket · <span id="mcpTs"></span></footer>
+</div>
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,37 @@
+services:
+  # ── Backend: MCP server + dashboard (Python stdlib + numpy + websockets) ──
+  mcp:
+    build: .
+    container_name: fable-mcp
+    ports:
+      - "8787:8787"
+    environment:
+      - BROKER=paper            # paper | binance | ibkr
+      - HTTP_PORT=8787
+      - INITIAL_CASH=100000
+    volumes:
+      - ./mcp-server:/app
+    command: python server.py --broker paper --http 8787
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8787/api/snapshot', timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # ── Almacenamiento de trades (opcional; el server puede correr sin él) ──
+  postgres:
+    image: postgres:16-alpine
+    container_name: fable-db
+    environment:
+      POSTGRES_USER: fable
+      POSTGRES_PASSWORD: fable
+      POSTGRES_DB: trading
+    ports:
+      - "5432:5432"
+    volumes:
+      - fable_pg:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  fable_pg:
